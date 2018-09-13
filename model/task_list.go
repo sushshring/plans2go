@@ -1,5 +1,12 @@
 package model
 
+import (
+	"bytes"
+	"container/heap"
+	"errors"
+	"fmt"
+)
+
 // A TaskList implements heap.Interface and holds Tasks
 type TaskList []*Task
 
@@ -10,7 +17,7 @@ func (taskList TaskList) Len() int {
 
 // Less compares two elements in the taskList
 func (taskList TaskList) Less(i, j int) bool {
-	return taskList[i].getPriority() > taskList[j].getPriority()
+	return taskList[i].GetPriority() > taskList[j].GetPriority()
 }
 
 // Swap swaps two elements in the queue in place
@@ -34,11 +41,32 @@ func (taskList *TaskList) Pop() interface{} {
 }
 
 // Peek returns the top element without removing it
-func (taskList *TaskList) Peek() interface{} { return *pq[-1] }
+func (taskList *TaskList) Peek() interface{} { return (*taskList)[len(*taskList)-1] }
 
 // AsList returns the current elements as a list
 func (taskList *TaskList) AsList() []*Task {
 	tmp := make([]*Task, len(*taskList))
 	copy(*taskList, tmp)
 	return tmp
+}
+
+// Remove removes a particular task from the list
+func (taskList *TaskList) Remove(i int) error {
+	if i >= len(*taskList) {
+		return errors.New("Invalid index provided")
+	}
+	t, n := *taskList, len(*taskList)
+	t[i], t[n-1] = t[n-1], t[i]
+	t = t[:n-1]
+	taskList = &t
+	heap.Fix(taskList, i)
+	return nil
+}
+
+func (taskList TaskList) String() string {
+	var buffer bytes.Buffer
+	for index, task := range taskList {
+		buffer.WriteString(fmt.Sprintf("Task %d: %s\n", index, *task))
+	}
+	return buffer.String()
 }
